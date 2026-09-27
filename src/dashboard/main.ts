@@ -2,16 +2,9 @@ import "../styles/fonts.css";
 import "../styles/tape.css";
 import "../styles/vhs.css";
 import "../styles/brand.css";
-import { homePage, sessionsPage, settingsPage, skillsPage, Page, PageContext } from "./pages";
+import { homePage, Page, PageContext } from "./pages";
 import { listen } from "@tauri-apps/api/event";
 import { isTauri, logo, prefersReducedMotion } from "./ui";
-
-const ROUTES = [
-  { path: "home", label: "Home" },
-  { path: "sessions", label: "Sessions" },
-  { path: "skills", label: "Skills" },
-  { path: "settings", label: "Settings" },
-] as const;
 
 const FX_KEY = "screendial_dashboard_fx";
 
@@ -37,11 +30,6 @@ class Dashboard {
       <div class="shell">
         <header class="topbar" data-tauri-drag-region>
           <a class="wordmark" href="#/home">${logo(24)}<span>Screendial</span></a>
-          <nav class="nav">
-            ${ROUTES.map(
-              (r, i) => `<a href="#/${r.path}" data-route="${r.path}"><span class="nav-num">0${i + 1}</span>${r.label}</a>`
-            ).join("")}
-          </nav>
           <span class="topbar-status meta"><span class="osd-dot"></span>Standby</span>
         </header>
         <main class="view" tabindex="-1"></main>
@@ -95,17 +83,7 @@ class Dashboard {
   }
 
   private resolve(): { name: string; page: (ctx: PageContext) => Page } {
-    const [name = "home", param] = location.hash.replace(/^#\/?/, "").split("/");
-    switch (name) {
-      case "sessions":
-        return { name, page: (ctx) => sessionsPage(ctx, param) };
-      case "skills":
-        return { name, page: skillsPage };
-      case "settings":
-        return { name, page: settingsPage };
-      default:
-        return { name: "home", page: homePage };
-    }
+    return { name: "home", page: homePage };
   }
 
   private async route(animate: boolean) {
@@ -113,9 +91,6 @@ class Dashboard {
     const token = ++this.routeToken;
 
     this.shell.dataset.route = name;
-    this.shell.querySelectorAll<HTMLAnchorElement>("[data-route]").forEach((a) => {
-      a.toggleAttribute("aria-current", a.dataset.route === name);
-    });
 
     // Tape "tracking" wipe: the old frame tears, the new one rolls in.
     const wipe = animate && !prefersReducedMotion();

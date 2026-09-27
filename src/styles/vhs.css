@@ -777,6 +777,35 @@ input {
   width: 26px;
 }
 
+.hero-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 36px;
+}
+
+.pill--disabled {
+  cursor: not-allowed;
+  color: rgba(255, 255, 255, 0.4);
+  border-color: currentColor;
+  opacity: 0.6;
+}
+
+.pill--disabled:hover {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  box-shadow: none;
+}
+
+.pill-note {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.8;
+}
+
 .text-btn {
   border: 0;
   background: none;
@@ -1150,6 +1179,42 @@ input {
   margin-top: 5px;
   font-size: 14.5px;
   line-height: 1.45;
+  color: var(--fg-dim);
+}
+
+.panel-copy {
+  display: grid;
+  gap: 22px;
+}
+
+.panel-copy p {
+  padding-top: 22px;
+  border-top: 1px solid var(--rule);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg-dim);
+}
+
+.panel-copy p:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.app-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+}
+
+.app-tag {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  font-size: 13px;
   color: var(--fg-dim);
 }
 

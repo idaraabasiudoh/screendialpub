@@ -1,7 +1,6 @@
 import { acquireTape, TapeVariant } from "./vhs";
 import { mountWaves } from "./waves";
 import { driveTickers, observeParallax, observeReveals } from "./motion";
-import { createChatBar } from "./chatbar";
 import { getSessions, getSkills, relativeTime, Session } from "./data";
 import {
   arrow,
@@ -146,8 +145,6 @@ function pageBand(title: string, swash: string, meta: string, art = "") {
 
 export function homePage(ctx: PageContext): Page {
   const scope = new Scope();
-  const sessions = getSessions();
-  const latest = sessions[0];
 
   const el = create(`
     <section class="hero">
@@ -161,18 +158,17 @@ export function homePage(ctx: PageContext): Page {
           <span class="hero-line hero-line--offset" data-reveal="2" data-parallax="220,70">DIAL</span>
           <em class="hero-swash" data-reveal="3" data-parallax="-60,160">your desktop,<br />narrated</em>
         </h1>
-      </div>
 
-      <div class="hero-strip" data-reveal="4">
-        <a class="strip-cell strip-latest" href="#/sessions/${latest.id}">
-          <span class="strip-label">Last<br/>session</span>
-          ${logo(40)}
-          <span class="strip-text">
-            <strong>${esc(latest.title)}</strong>
-            <span>${esc(latest.app)} &middot; ${relativeTime(latest.startedAt)}</span>
+        <div class="hero-downloads" data-reveal="4">
+          <a class="pill" href="/downloads/Screendial_0.1.0_aarch64.dmg" download>
+            Download for Mac
+            ${arrow}
+          </a>
+          <span class="pill pill--disabled" aria-disabled="true">
+            Download for Windows
+            <span class="pill-note">Coming soon</span>
           </span>
-        </a>
-        <div class="strip-chat"></div>
+        </div>
       </div>
     </section>
 
@@ -188,23 +184,12 @@ export function homePage(ctx: PageContext): Page {
       <div class="split-panel">
         <header class="panel-head" data-reveal="0" data-motion="wipe">
           ${logo(56)}
-          <h2 class="stack-heading">Recent<br/>sessions</h2>
+          <h2 class="stack-heading">Watches<br/>&amp; narrates</h2>
         </header>
-        <ol class="teasers">
-          ${sessions
-            .slice(0, 3)
-            .map(
-              (s, i) => `
-            <li data-reveal="${i + 1}" data-motion="right">
-              <a href="#/sessions/${s.id}">
-                <h3>${esc(s.title)}</h3>
-                <p>${relativeTime(s.startedAt)}<br/>${esc(s.app)} &middot; ${s.duration}</p>
-                <span class="pill pill--ghost">Replay ${arrow}</span>
-              </a>
-            </li>`
-            )
-            .join("")}
-        </ol>
+        <div class="panel-copy">
+          <p data-reveal="1" data-motion="right">Use Screendial to show you explain or guide you on anything on your screen; Learning a new software, navigating your system, explaining and writing code, or troubleshooting your PC.</p>
+          <p data-reveal="2" data-motion="right">Ask it anything, and it narrates while pointing at the screen, walking you through each step, so you can keep both hands on your work.</p>
+        </div>
       </div>
     </section>
 
@@ -212,14 +197,16 @@ export function homePage(ctx: PageContext): Page {
       <div class="split-panel">
         <header class="panel-head" data-reveal="0" data-motion="wipe">
           ${logo(56)}
-          <h2 class="stack-heading">Tool<em class="swash-inline">&amp;</em><br/>kit</h2>
+          <h2 class="stack-heading">Works<br/>with</h2>
         </header>
-        <dl class="kit">
-          <div data-reveal="1" data-motion="left"><dt>Points at</dt>${arrow}<dd><b>highlight</b><span>Boxes the exact control and anchors a callout beside it.</span></dd></div>
-          <div data-reveal="2" data-motion="left"><dt>Explains</dt>${arrow}<dd><b>overlay</b><b>code_overlay</b><span>Short guidance, or a snippet you can copy.</span></dd></div>
-          <div data-reveal="3" data-motion="left"><dt>Tracks</dt>${arrow}<dd><b>to_do_overlay</b><span>Multi-step work as a checklist you tick off.</span></dd></div>
-          <div data-reveal="4" data-motion="left"><dt>Speaks</dt>${arrow}<dd><b>voice</b><span>Spoken guidance, timed with the visuals.</span></dd></div>
-        </dl>
+        <div class="panel-copy">
+          <p data-reveal="1" data-motion="left">Screendial isn't locked to one app. Point it at whatever's open and it adapts to that interface, from creative tools to everyday office software.</p>
+          <ul class="app-tags" data-reveal="2" data-motion="left">
+            ${["DaVinci Resolve", "Excel", "Photoshop", "Final Cut Pro", "Xcode", "Visual Studio Code", "Safari", "Finder", "PowerPoint"]
+              .map((a) => `<li class="app-tag">${esc(a)}</li>`)
+              .join("")}
+          </ul>
+        </div>
       </div>
       <figure class="split-media" data-tape="sodium">
         ${fxLayers("soft")}
@@ -247,11 +234,7 @@ export function homePage(ctx: PageContext): Page {
 
     <footer class="colophon">
       <span class="colophon-mark" aria-hidden="true" data-parallax="-180,0">SIDE A</span>
-      <div data-reveal="0"><p class="meta">Tape</p><p>01 / Side A</p></div>
-      <div data-reveal="1"><p class="meta">Build</p><p>v0.1.0 &middot; Tauri 2</p></div>
-      <div data-reveal="2"><p class="meta">Needs</p><p>Screen Recording<br/>Microphone</p></div>
-      <div data-reveal="3"><p class="meta">Summon</p><p>Tray &rarr; Ask Screendial</p></div>
-      <div class="colophon-end" data-reveal="4">
+      <div class="colophon-end" data-reveal="0">
         <span class="meta"><span class="osd-dot"></span>End of tape</span>
         <button class="text-btn" type="button" data-rewind>&#9664;&#9664; Rewind</button>
       </div>
@@ -274,10 +257,6 @@ export function homePage(ctx: PageContext): Page {
   el.querySelector("[data-rewind]")!.addEventListener("click", () =>
     el.closest(".view")?.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" })
   );
-
-  const chat = createChatBar({ onOpenSettings: () => ctx.navigate("settings"), toast: ctx.toast });
-  el.querySelector(".strip-chat")!.appendChild(chat.el);
-  scope.add(() => chat.destroy());
 
   return { el, destroy: () => scope.dispose() };
 }
