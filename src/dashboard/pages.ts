@@ -178,12 +178,10 @@ export function homePage(ctx: PageContext): Page {
 
     <section class="split">
       ${sticker("camera", "seam", -8, "0,-140")}
-      <figure class="split-media" data-tape="tide">
+      <figure class="split-media split-media--video">
+        <video class="split-video" src="/videos/excel.mp4" autoplay muted playsinline controls></video>
         ${fxLayers("soft")}
-        <span class="vf-frame vf-frame--fig" aria-hidden="true"></span>
-        <span class="fig-num" aria-hidden="true" data-parallax="0,-160">02</span>
-        <div class="osd osd--meter" aria-hidden="true"><span>Tracking</span><span class="meter">${"<i></i>".repeat(8)}</span></div>
-        <figcaption class="meta" data-reveal="2" data-motion="wipe">Fig. 02 &mdash; Signal, hand-held</figcaption>
+        <figcaption class="meta" data-reveal="2" data-motion="wipe">Fig. 02 &mdash; Excel, live</figcaption>
       </figure>
       <div class="split-panel">
         <header class="panel-head" data-reveal="0" data-motion="wipe">
@@ -246,7 +244,6 @@ export function homePage(ctx: PageContext): Page {
   const run = () => {
     scope.tape(el.querySelector(".hero")!, "broadcast", 1, ctx);
     scope.waves(el.querySelector(".hero")!, "broadcast", 0.6, ctx);
-    scope.tape(el.querySelector('[data-tape="tide"]')!, "tide", 0.6, ctx);
     el.querySelectorAll<HTMLElement>("[data-timecode]").forEach((t) =>
       scope.add(startTimecode(t, 14 * 60 + 32))
     );
