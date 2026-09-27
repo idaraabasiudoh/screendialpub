@@ -66,7 +66,8 @@ const fxLayers = (level: "full" | "soft" | "trace") => `
 
 const sep = `<span class="sep" aria-hidden="true"></span>`;
 
-const INSTALL_SCRIPT_URL = "https://raw.githubusercontent.com/idaraabasiudoh/screendialpub/main/install.sh";
+const MAC_INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/idaraabasiudoh/screendialpub/main/install.sh | bash";
+const WINDOWS_INSTALL_CMD = "irm https://raw.githubusercontent.com/idaraabasiudoh/screendialpub/main/install.ps1 | iex";
 
 /**
  * Halftone collage cut-outs (styling-assets asset1-4, palette-reduced into public/art),
@@ -164,15 +165,16 @@ export function homePage(ctx: PageContext): Page {
         <div class="hero-downloads" data-reveal="4">
           <div class="install-cmd">
             <span class="install-cmd-label">macOS</span>
-            <code class="install-cmd-text">curl -fsSL ${INSTALL_SCRIPT_URL} | bash</code>
+            <code class="install-cmd-text">${MAC_INSTALL_CMD}</code>
             <button type="button" class="install-cmd-copy" data-copy-cmd>Copy</button>
           </div>
-          <span class="pill pill--disabled" aria-disabled="true">
-            Download for Windows
-            <span class="pill-note">Coming soon</span>
-          </span>
+          <div class="install-cmd install-cmd--ps">
+            <span class="install-cmd-label">Windows</span>
+            <code class="install-cmd-text">${WINDOWS_INSTALL_CMD}</code>
+            <button type="button" class="install-cmd-copy" data-copy-cmd>Copy</button>
+          </div>
         </div>
-        <p class="meta install-cmd-note" data-reveal="5">Installs to /Applications ${sep} Clears the Gatekeeper quarantine flag</p>
+        <p class="meta install-cmd-note" data-reveal="5">macOS: installs to /Applications, clears the Gatekeeper quarantine flag ${sep} Windows: run from PowerShell</p>
       </div>
     </section>
 
@@ -256,16 +258,18 @@ export function homePage(ctx: PageContext): Page {
     el.closest(".view")?.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" })
   );
 
-  const copyBtn = el.querySelector<HTMLButtonElement>("[data-copy-cmd]")!;
-  const copyText = el.querySelector<HTMLElement>(".install-cmd-text")!.textContent!;
-  copyBtn.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(copyText);
-      copyBtn.textContent = "Copied";
-    } catch {
-      copyBtn.textContent = "Select & copy";
-    }
-    window.setTimeout(() => (copyBtn.textContent = "Copy"), 1800);
+  el.querySelectorAll<HTMLElement>(".install-cmd").forEach((row) => {
+    const copyBtn = row.querySelector<HTMLButtonElement>("[data-copy-cmd]")!;
+    const copyText = row.querySelector<HTMLElement>(".install-cmd-text")!.textContent!;
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(copyText);
+        copyBtn.textContent = "Copied";
+      } catch {
+        copyBtn.textContent = "Select & copy";
+      }
+      window.setTimeout(() => (copyBtn.textContent = "Copy"), 1800);
+    });
   });
 
   return { el, destroy: () => scope.dispose() };

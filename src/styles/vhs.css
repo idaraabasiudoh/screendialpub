@@ -840,6 +840,10 @@ input {
   color: var(--fg-faint);
 }
 
+.install-cmd--ps .install-cmd-text::before {
+  content: "> ";
+}
+
 .install-cmd-copy {
   flex: none;
   height: 30px;
