@@ -1,0 +1,2331 @@
+/* ==========================================================================
+   Screendial Dashboard — "a 1990s music video found on tape, re-cut by a
+   contemporary art director". Effects are strongest in the hero and taper off.
+   ========================================================================== */
+
+:root {
+  /* base */
+  --ink-0: #00111f;
+  --ink-1: #001a2b;
+  --ink-2: #062b43;
+
+  /* atmosphere */
+  --electric: #2f6bff;
+  --cobalt: #1636e8;
+  --violet: #3d1a8a;
+  --purple: #6a1fb0;
+  --magenta: #d61f82;
+  --hot: #ff3d9a;
+  --ember: #ff6a1a;
+  --red: #e8352b;
+  --teal: #3cc6c0;
+
+  /* accent — used sparingly */
+  --volt: #efff00;
+  --volt-dim: rgba(239, 255, 0, 0.34);
+
+  /* text */
+  --fg: #e9edf2;
+  /* dim/faint sit higher than usual: Advent Pro's thin strokes lose contrast fast */
+  --fg-dim: rgba(233, 237, 242, 0.72);
+  --fg-faint: rgba(233, 237, 242, 0.5);
+  --swash: #ffe6f2;
+
+  --rule: rgba(233, 237, 242, 0.09);
+  --rule-strong: rgba(233, 237, 242, 0.2);
+
+  /* Blue Ocean carries the headlines and nothing under ~20px: it is a heavy, high-contrast
+     serif whose hairlines break up at small sizes. Advent Pro does everything else: body,
+     UI, the pink accent words, and (in caps with tracking) the tape-deck readout. Anything
+     read character by character (code, API keys, skill source) goes to the system mono,
+     since Advent Pro's I, l, 1 and | collide. */
+  --f-display: "Blue Ocean", "Iowan Old Style", Georgia, serif;
+  --f-text: "Advent Pro", "Helvetica Neue", Arial, sans-serif;
+  --f-accent: var(--f-text);
+  --f-readout: var(--f-text);
+  --f-code: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --gutter: clamp(20px, 6vw, 96px);
+
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--ink-0);
+  color: var(--fg);
+  font-family: var(--f-text);
+  font-size: 15px;
+  /* Advent Pro runs light: its 500 carries the colour Archivo had at 400 */
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--volt);
+  color: var(--ink-0);
+}
+
+:focus-visible {
+  outline: 1px solid var(--volt);
+  outline-offset: 3px;
+}
+
+.meta {
+  font-family: var(--f-readout);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+.sep {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 0.9em;
+  border: 1.5px solid var(--volt);
+  border-radius: 50%;
+  vertical-align: 0.1em;
+}
+
+/* --------------------------------------------------------------------------
+   Shell
+   -------------------------------------------------------------------------- */
+
+.shell {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* whisper of grain over the whole app, so calm pages still feel like tape */
+.shell::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  background-image: var(--grain);
+  opacity: 0.035;
+}
+
+.topbar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 20;
+  height: 56px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 32px;
+  padding: 0 28px 0 92px; /* room for macOS traffic lights */
+  background: linear-gradient(to bottom, rgba(0, 17, 31, 0.92), rgba(0, 17, 31, 0.55) 60%, rgba(0, 17, 31, 0));
+}
+
+.shell:not([data-route="home"]) .topbar,
+.shell.is-scrolled .topbar {
+  background: var(--ink-0);
+  border-bottom: 1px solid var(--rule);
+}
+
+.topbar {
+  transition: background 0.3s;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: flex;
+  justify-content: center;
+  gap: clamp(18px, 3vw, 44px);
+}
+
+.nav a {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 6px 0;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  transition: color 0.2s;
+}
+
+.nav-num {
+  font-family: var(--f-readout);
+  font-size: 11px;
+  color: var(--fg-faint);
+  letter-spacing: 0.05em;
+  transition: color 0.2s;
+}
+
+.nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--volt);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s var(--ease-out);
+}
+
+.nav a:hover,
+.nav a[aria-current] {
+  color: var(--fg);
+}
+
+.nav a[aria-current] .nav-num {
+  color: var(--volt);
+}
+
+.nav a[aria-current]::after,
+.nav a:hover::after {
+  transform: scaleX(1);
+}
+
+/* hover: the label catches the OSD's chroma split and jolts once, like a tracking error */
+.nav a:hover {
+  text-shadow: 1.5px 0 rgba(255, 30, 120, 0.7), -1.5px 0 rgba(0, 190, 255, 0.7);
+  animation: nav-jolt 0.24s steps(3) 1;
+}
+
+@keyframes nav-jolt {
+  0% { transform: none; }
+  33% { transform: translateX(-1.5px); }
+  67% { transform: translateX(1.5px) skewX(-6deg); }
+  100% { transform: none; }
+}
+
+.topbar-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.view {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(239, 255, 0, 0.25) transparent;
+}
+
+.shell:not([data-route="home"]) .view {
+  top: 56px;
+}
+
+.view:focus {
+  outline: none;
+}
+
+/* --------------------------------------------------------------------------
+   Tape layers (canvas + CSS scanlines / grain / rolling bar / vignette)
+   -------------------------------------------------------------------------- */
+
+.tape-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tape-fx > span {
+  position: absolute;
+  inset: 0;
+}
+
+/* the slow bright hum bar of a detuned deck */
+.tape-fx > .fx-band {
+  inset: auto 0;
+  top: 0;
+  height: 22%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 255, 255, 0.045) 40%,
+    rgba(255, 240, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.045) 60%,
+    transparent
+  );
+  will-change: transform;
+  animation: hum-bar 11.3s linear infinite;
+}
+
+.fx-scrim {
+  background: none;
+}
+
+.hero .fx-scrim {
+  background: linear-gradient(90deg, rgba(0, 8, 20, 0.6) 0%, rgba(0, 8, 20, 0.28) 45%, transparent 72%);
+}
+
+.page-band .fx-scrim {
+  background: linear-gradient(to top, rgba(0, 10, 22, 0.66), rgba(0, 10, 22, 0.1) 75%);
+}
+
+.fx-vignette {
+  background: radial-gradient(ellipse at 50% 45%, transparent 52%, rgba(0, 5, 14, 0.62) 100%);
+}
+
+.tape-fx--soft > .fx-band { opacity: 0.6; animation-duration: 14.7s; }
+.tape-fx--trace > .fx-band { display: none; }
+
+/* --------------------------------------------------------------------------
+   On-screen display (tape deck OSD)
+   -------------------------------------------------------------------------- */
+
+.osd {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--f-readout);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow:
+    1.5px 0 rgba(255, 30, 120, 0.55),
+    -1.5px 0 rgba(0, 190, 255, 0.55),
+    0 0 8px rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+/* Advent Pro has no tabular figures, so the counter sets each digit in a fixed cell to
+   keep it from shimmying as it runs. Cells match the figures' ink (~0.5em), not their
+   advance: the face's wide sidebearings would otherwise space the counter out. */
+.tc-d {
+  display: inline-block;
+  width: 0.5em;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.osd-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff2e3f;
+  box-shadow: 0 0 8px rgba(255, 46, 63, 0.8);
+  animation: osd-blink 1.4s steps(1) infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Hero
+   -------------------------------------------------------------------------- */
+
+.hero {
+  position: relative;
+  height: 100vh;
+  min-height: 620px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--ink-0);
+}
+
+.hero-copy {
+  position: absolute;
+  z-index: 2;
+  left: var(--gutter);
+  right: var(--gutter);
+  top: 47%;
+  transform: translateY(-50%);
+}
+
+.hero-kicker {
+  color: var(--volt);
+  margin: 0 0 22px 36%;
+  font-size: 11.5px;
+  letter-spacing: 0.24em;
+}
+
+.hero-title {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: clamp(88px, 15vw, 250px);
+  line-height: 0.86;
+  letter-spacing: -0.02em;
+  color: var(--volt);
+  text-shadow: 0 2px 40px rgba(0, 8, 20, 0.35);
+}
+
+.hero-line {
+  display: block;
+}
+
+.hero-line--offset {
+  margin-left: 1.35em; /* DIAL's right edge lines up with SCREEN's */
+}
+
+/* Tucked into the gap left of DIAL rather than laid over the letters: Blue Ocean's caps are
+   too heavy for a thin line to read across them. */
+.hero-swash {
+  position: absolute;
+  /* offsets are in this element's em (0.2 of the title's): 0.1 and 1.07 title-em */
+  left: 0.5em;
+  top: 5.35em;
+  z-index: 2;
+  font-family: var(--f-accent);
+  font-style: normal;
+  font-weight: 300;
+  font-size: 0.2em;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+  white-space: nowrap;
+  color: var(--swash);
+  rotate: -5deg; /* not transform: the reveal keyframes own that */
+  text-shadow: 0 1px 24px rgba(0, 8, 20, 0.55);
+}
+
+.hero-strip {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 2fr);
+  align-items: end;
+  gap: 40px;
+  padding: 18px 32px 24px var(--gutter);
+  border-top: 1px solid var(--volt-dim);
+  background: linear-gradient(to top, rgba(0, 17, 31, 0.78), rgba(0, 17, 31, 0.15));
+}
+
+.strip-latest {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  min-height: 56px;
+  text-decoration: none;
+}
+
+.strip-label {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.02;
+  color: var(--volt);
+}
+
+.strip-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.strip-text strong {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--volt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.strip-text span {
+  font-size: 15px;
+  color: var(--fg-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.strip-latest:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+
+/* --------------------------------------------------------------------------
+   Chat bar (hero) — remote control for the overlay's agent
+   -------------------------------------------------------------------------- */
+
+.strip-chat {
+  min-width: 0;
+}
+
+.chatbar {
+  display: grid;
+  gap: 10px;
+}
+
+.chat-log {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  max-height: 132px;
+  padding-left: 18px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.chatbar:not(.has-log) .chat-log {
+  display: none;
+}
+
+.chat-turn {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  align-items: baseline;
+  animation: turn-in 0.5s var(--ease-out) both;
+}
+
+.chat-turn p {
+  font-size: 15.5px;
+  line-height: 1.45;
+}
+
+.chat-turn--agent .meta {
+  color: var(--volt);
+}
+
+.chat-turn--agent p {
+  padding-left: 12px;
+  border-left: 1px solid var(--volt);
+  color: var(--fg-dim);
+}
+
+.chat-turn.is-error p {
+  border-color: #ff4d5e;
+  color: #ffb8bf;
+}
+
+.chat-tools code {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border: 1px solid var(--volt-dim);
+  border-radius: 999px;
+  font-family: var(--f-code);
+  font-size: 10.5px;
+  color: var(--volt);
+  vertical-align: 1px;
+}
+
+.chatbar-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-left: 18px;
+}
+
+.chatbar .osd-dot {
+  background: var(--volt-dim);
+  box-shadow: none;
+  animation: none;
+}
+
+.chatbar-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 58px;
+  padding: 8px 8px 8px 14px;
+  border: 1.2px solid var(--volt-dim);
+  border-radius: 29px;
+  background: rgba(0, 12, 24, 0.8);
+  overflow: hidden;
+  transition: border-color 0.25s, box-shadow 0.3s;
+}
+
+
+.chatbar-box:focus-within {
+  border-color: var(--volt);
+  box-shadow: 0 0 0 4px rgba(239, 255, 0, 0.07), 0 0 36px rgba(239, 255, 0, 0.12);
+}
+
+.chatbar-mark {
+  display: grid;
+  place-items: center;
+}
+
+.chatbar-box textarea {
+  flex: 1;
+  min-width: 0;
+  max-height: 120px;
+  padding: 8px 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-family: var(--f-text);
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--fg);
+}
+
+.chatbar-box textarea::placeholder {
+  color: var(--fg-faint);
+}
+
+.chatbar-box textarea:disabled {
+  opacity: 0.55;
+}
+
+.chatbar-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--fg-dim);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.icon-btn:hover {
+  color: var(--fg);
+  background: rgba(233, 237, 242, 0.07);
+}
+
+.icon-btn[aria-pressed="true"] {
+  color: var(--volt);
+}
+
+.icon-btn--mic {
+  position: relative;
+  margin-left: 6px;
+  border: 1px solid var(--rule-strong);
+}
+
+.icon-btn--mic[aria-pressed="true"] {
+  color: #fff;
+  background: #ff2e3f;
+  border-color: #ff2e3f;
+}
+
+.chatbar-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  margin-left: 6px;
+  padding: 0 16px 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--volt);
+  color: var(--ink-0);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: box-shadow 0.25s, opacity 0.2s;
+}
+
+.chatbar-send .px-arrow {
+  transition: transform 0.3s steps(2); /* moves in whole art pixels */
+}
+
+.chatbar-send:hover {
+  box-shadow: 0 0 26px rgba(239, 255, 0, 0.35);
+}
+
+.chatbar-send:hover .px-arrow {
+  transform: translateX(4px);
+}
+
+.chatbar-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.chatbar-progress::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 32%;
+  background: linear-gradient(90deg, transparent, var(--volt), transparent);
+}
+
+/* states, mirrored from the overlay */
+.chatbar[data-state="processing"] .chatbar-progress { opacity: 1; }
+/* only sweeps while there is work: an always-on loop behind opacity 0 still costs frames */
+.chatbar[data-state="processing"] .chatbar-progress::after { animation: sweep 1.25s linear infinite; }
+.chatbar[data-state="processing"] .chatbar-send { opacity: 0.35; pointer-events: none; }
+.chatbar[data-state="processing"] .osd-dot {
+  background: var(--volt);
+  animation: osd-blink 0.6s steps(1) infinite;
+}
+
+.chatbar[data-state="listening"] .chatbar-box { border-color: #ff2e3f; }
+.chatbar[data-state="listening"] .osd-dot {
+  background: #ff2e3f;
+  box-shadow: 0 0 8px rgba(255, 46, 63, 0.8);
+  animation: osd-blink 1s steps(1) infinite;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  height: 42px;
+  padding: 0 18px 0 22px;
+  border: 1.2px solid var(--volt);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--volt);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.25s;
+}
+
+.pill .arrow {
+  transition: transform 0.35s var(--ease-out);
+}
+
+.pill:hover {
+  background: var(--volt);
+  color: var(--ink-0);
+  box-shadow: 0 0 24px rgba(239, 255, 0, 0.3);
+}
+
+.pill:hover .arrow {
+  transform: translateX(5px);
+}
+
+.pill--ghost {
+  height: 32px;
+  padding: 0 14px 0 16px;
+  font-size: 12.5px;
+  gap: 10px;
+  width: max-content;
+}
+
+.pill--ghost .arrow {
+  width: 26px;
+}
+
+.text-btn {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--f-readout);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  padding: 10px 0;
+}
+
+.text-btn:hover {
+  color: var(--volt);
+}
+
+/* --------------------------------------------------------------------------
+   Viewfinder (camcorder frame)
+   -------------------------------------------------------------------------- */
+
+/* After the reference frame: thin white corner brackets inset from the picture and a bold
+   white readout tucked inside each corner (REC, clock, VHS, counter), with the OSD's
+   chroma split. Each host sets where the frame sits and how big it reads. */
+.vf {
+  position: absolute;
+  z-index: 3;
+  inset: var(--vf-top) var(--vf-side) var(--vf-bottom);
+  pointer-events: none;
+  font-family: var(--f-readout);
+  font-size: var(--vf-size);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-shadow:
+    1.5px 0 rgba(255, 30, 120, 0.55),
+    -1.5px 0 rgba(0, 190, 255, 0.55),
+    0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* the reference, scaled ~3x onto the hero: arms ~13% of the width, labels ~4.4% of the
+   frame's height, set ~4% / ~7% in from the corners */
+.vf--hero {
+  --vf-top: 76px; /* clear of the topbar */
+  --vf-side: calc(var(--gutter) / 2); /* left brackets sit outside the headline */
+  --vf-bottom: 150px; /* clear of the chat strip */
+  --vf-arm: clamp(56px, 12.5vw, 190px);
+  --vf-pad-x: calc(var(--gutter) / 2 + 6px); /* REC lines up with the headline */
+  --vf-pad-y: clamp(14px, 5vh, 46px);
+  --vf-size: clamp(16px, 3.6vh, 32px);
+}
+
+.vf--band {
+  --vf-top: 16px;
+  --vf-side: 16px;
+  --vf-bottom: 16px;
+  --vf-arm: 56px;
+  --vf-pad-x: 18px;
+  --vf-pad-y: 16px;
+  --vf-size: 14px;
+}
+
+.vf-frame {
+  --c: rgba(255, 255, 255, 0.92);
+  --a: var(--vf-arm, 56px);
+  --w: var(--vf-line, 2px);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--c), var(--c)) top left / var(--a) var(--w),
+    linear-gradient(var(--c), var(--c)) top left / var(--w) var(--a),
+    linear-gradient(var(--c), var(--c)) top right / var(--a) var(--w),
+    linear-gradient(var(--c), var(--c)) top right / var(--w) var(--a),
+    linear-gradient(var(--c), var(--c)) bottom left / var(--a) var(--w),
+    linear-gradient(var(--c), var(--c)) bottom left / var(--w) var(--a),
+    linear-gradient(var(--c), var(--c)) bottom right / var(--a) var(--w),
+    linear-gradient(var(--c), var(--c)) bottom right / var(--w) var(--a);
+  background-repeat: no-repeat;
+  /* the same chroma split as the readouts; static, so it rasterises once */
+  filter: drop-shadow(1px 0 rgba(255, 30, 120, 0.5)) drop-shadow(-1px 0 rgba(0, 190, 255, 0.5));
+}
+
+/* the figure plates wear the same brackets, lighter */
+.vf-frame--fig {
+  z-index: 2;
+  inset: 22px;
+  --vf-arm: 44px;
+  --vf-line: 1.5px;
+  --c: rgba(255, 255, 255, 0.7);
+}
+
+.vf-label {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  white-space: nowrap;
+}
+
+.vf-tl { top: var(--vf-pad-y); left: var(--vf-pad-x); }
+.vf-tr { top: var(--vf-pad-y); right: var(--vf-pad-x); }
+.vf-bl { bottom: var(--vf-pad-y); left: var(--vf-pad-x); }
+.vf-br { bottom: var(--vf-pad-y); right: var(--vf-pad-x); }
+
+/* the record light is the logo's red dot */
+.vf-rec-dot {
+  width: 0.46em;
+  height: 0.46em;
+  border-radius: 50%;
+  background: #ff2e3f;
+  box-shadow: 0 0 0.4em rgba(255, 46, 63, 0.8);
+  animation: osd-blink 1.4s steps(1) infinite;
+}
+
+.vf-colon {
+  animation: osd-blink 1s steps(1) infinite;
+}
+
+/* Power-on: the brackets hunt for focus (overshoot in, settle) and the readouts flicker
+   up after them. One-shot, transform and opacity only. */
+.vf > .vf-frame {
+  animation: vf-lock 0.9s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+
+.vf > .vf-label {
+  animation: vf-label-in 0.45s steps(3) 0.5s both;
+}
+
+@keyframes vf-lock {
+  0% { opacity: 0; transform: scale(1.07); }
+  25% { opacity: 1; }
+  45% { transform: scale(0.975); }
+  70% { transform: scale(1.01); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes vf-label-in {
+  0% { opacity: 0; }
+  34% { opacity: 1; }
+  67% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+/* colons get a sliver of air either side, as in the reference */
+.tc-sep,
+.vf-colon {
+  margin: 0 0.07em;
+}
+
+/* counters and clocks set tight, like the reference: the cells already space the digits,
+   so no flex gap (that is for the REC light) and no tracking between them */
+.vf-tr,
+.vf-br {
+  gap: 0;
+  letter-spacing: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Collage stickers
+   -------------------------------------------------------------------------- */
+
+/* Halftone cut-outs slapped onto the page (pages.ts sticker()). The paper shadow is a
+   static filter: each sticker is its own layer (it parallaxes), so the shadow rasterises
+   once and moving it stays a compositor job. */
+.page {
+  position: relative;
+}
+
+.sticker {
+  position: absolute;
+  z-index: 6;
+  width: clamp(130px, 15vw, 220px);
+  height: auto;
+  rotate: var(--tilt, 0deg);
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 12px 16px rgba(0, 5, 14, 0.55));
+}
+
+/* hangs off the page band's bottom edge, right of the title */
+.sticker--band {
+  top: calc(300px - var(--h) * 0.55);
+  right: 13vw;
+}
+
+/* straddles the seam between the Fig. 02 plate and Recent sessions */
+.sticker--seam {
+  left: calc(50% - 12vw);
+  bottom: calc(var(--h) * -0.3);
+}
+
+/* --------------------------------------------------------------------------
+   Editorial splits (home)
+   -------------------------------------------------------------------------- */
+
+.split {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 580px;
+  border-top: 1px solid var(--rule);
+}
+
+.split-media {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--ink-1);
+  min-height: 520px;
+}
+
+.split-media figcaption {
+  position: absolute;
+  z-index: 3;
+  left: 40px;
+  bottom: 38px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* Plate furniture (brackets are .vf-frame--fig): the plate number in outline, a tracking meter. */
+.fig-num {
+  position: absolute;
+  z-index: 2;
+  right: 36px;
+  top: 34%;
+  font-family: var(--f-display);
+  font-size: clamp(160px, 20vw, 320px);
+  font-weight: 400;
+  line-height: 0.8;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255, 244, 232, 0.5);
+  pointer-events: none;
+}
+
+.osd--meter {
+  top: 40px;
+  left: 40px;
+  gap: 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.meter {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 12px;
+}
+
+.meter i {
+  width: 4px;
+  height: 100%;
+  background: currentColor;
+  transform-origin: bottom;
+  animation: meter 0.9s steps(4) infinite alternate;
+}
+
+.meter i:nth-child(2n) { animation-duration: 1.3s; }
+.meter i:nth-child(3n) { animation-duration: 0.7s; animation-delay: -0.3s; }
+.meter i:nth-child(5n) { animation-duration: 1.7s; }
+.meter i:nth-child(7n) { animation-delay: -0.6s; }
+
+.split-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+  padding: 80px var(--gutter) 72px clamp(28px, 5vw, 72px);
+  background: var(--ink-0);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.stack-heading {
+  font-family: var(--f-display);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--volt);
+}
+
+.swash-inline {
+  font-family: var(--f-accent);
+  font-style: normal;
+  font-weight: 300;
+  text-transform: none;
+  font-size: 1.1em;
+  color: var(--swash);
+  margin: 0 0.06em 0 0.1em;
+}
+
+.teasers {
+  list-style: none;
+  display: grid;
+}
+
+.teasers a {
+  display: grid;
+  gap: 8px;
+  padding: 20px 0 22px;
+  border-top: 1px solid var(--rule);
+  text-decoration: none;
+}
+
+.teasers h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--volt);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+.teasers p {
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--fg-dim);
+}
+
+.teasers .pill {
+  margin-top: 6px;
+}
+
+.teasers a:hover h3 {
+  text-decoration: underline;
+}
+
+.teasers a:hover .pill {
+  background: var(--volt);
+  color: var(--ink-0);
+}
+
+.kit {
+  display: grid;
+}
+
+.kit > div {
+  display: grid;
+  grid-template-columns: 96px 40px 1fr;
+  align-items: start;
+  gap: 16px;
+  padding: 18px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.kit dt {
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.kit .arrow {
+  margin-top: 5px;
+  color: var(--fg-faint);
+}
+
+.kit b {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--volt);
+  margin-right: 12px;
+}
+
+.kit dd span {
+  display: block;
+  margin-top: 5px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--fg-dim);
+}
+
+/* Two rows running against each other, tilted like a label slapped on the cassette.
+   motion.ts drives them: an idle crawl that surges when the page is scrolled. */
+.ticker {
+  display: grid;
+  gap: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  margin: 28px 0;
+  padding: 20px 0 16px;
+  border-block: 1px solid var(--volt-dim);
+  background:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 3px),
+    var(--ink-1);
+  rotate: -1.6deg;
+  scale: 1.04;
+}
+
+.ticker-track {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  will-change: transform;
+}
+
+/* scoped under .ticker so it outranks the base row rules below */
+.ticker .ticker-track--ghost span:not(.sep),
+.ticker .ticker-track--ghost span:nth-child(4n + 3) {
+  font-family: var(--f-display);
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1.05;
+  text-transform: none;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(239, 255, 0, 0.55);
+}
+
+.ticker .ticker-track--ghost span:nth-child(4n + 3) {
+  -webkit-text-stroke-color: rgba(255, 230, 242, 0.6);
+}
+
+.ticker-track > * {
+  margin-right: 30px;
+}
+
+.ticker-track span:not(.sep) {
+  font-family: var(--f-display);
+  font-size: 28px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.ticker-track span:nth-child(4n + 3) {
+  font-family: var(--f-accent);
+  font-style: normal;
+  font-weight: 300;
+  text-transform: none;
+  color: var(--swash);
+  font-size: 32px;
+}
+
+.colophon {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px;
+  padding: 64px var(--gutter) 40px;
+}
+
+/* the label's side letter, cropped by the card */
+.colophon-mark {
+  position: absolute;
+  z-index: -1;
+  right: -0.04em;
+  bottom: -0.2em;
+  font-family: var(--f-display);
+  font-size: clamp(120px, 19vw, 300px);
+  line-height: 1;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(239, 255, 0, 0.16);
+  pointer-events: none;
+}
+
+.colophon-end {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+
+.colophon-end .meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.colophon-end .osd-dot {
+  animation: osd-blink 1.3s steps(1) infinite;
+}
+
+.colophon-end .text-btn {
+  color: var(--volt);
+}
+
+.colophon p:not(.meta) {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Page band (inner pages — calmer tape)
+   -------------------------------------------------------------------------- */
+
+.page-band {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 var(--gutter) 34px;
+  border-bottom: 1px solid var(--volt-dim);
+  background: var(--ink-1);
+}
+
+.page-band .tape-canvas {
+  filter: brightness(0.86);
+}
+
+.band-copy {
+  position: relative;
+  z-index: 2;
+}
+
+/* the title again, huge and hollow, cropped by the band and drifting at its own depth */
+.band-ghost {
+  position: absolute;
+  z-index: 1;
+  right: -0.06em;
+  bottom: -0.3em;
+  font-family: var(--f-display);
+  font-size: clamp(150px, 21vw, 330px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(239, 255, 0, 0.3);
+  pointer-events: none;
+}
+
+.band-copy .meta {
+  color: var(--fg);
+  margin-bottom: 16px;
+}
+
+.band-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.22em;
+  font-size: clamp(64px, 9vw, 136px);
+  font-family: var(--f-display);
+  font-weight: 400;
+  line-height: 0.86;
+  letter-spacing: -0.015em;
+  color: var(--volt);
+}
+
+.swash {
+  font-family: var(--f-accent);
+  font-style: normal;
+  font-weight: 300;
+  font-size: 0.42em;
+  letter-spacing: 0;
+  color: var(--swash);
+}
+
+/* --------------------------------------------------------------------------
+   Sessions
+   -------------------------------------------------------------------------- */
+
+.sessions {
+  display: grid;
+  grid-template-columns: minmax(290px, 380px) minmax(0, 1fr);
+  min-height: calc(100vh - 356px);
+}
+
+.session-index {
+  border-right: 1px solid var(--rule);
+  padding: 28px 0 48px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 28px 22px;
+}
+
+.chip {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background: none;
+  font-size: 12px;
+  color: var(--fg-dim);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.chip:hover {
+  color: var(--fg);
+}
+
+.chip.is-on {
+  border-color: var(--volt);
+  color: var(--volt);
+}
+
+.search {
+  display: grid;
+  gap: 6px;
+  padding: 0 28px 22px;
+}
+
+.search input,
+.field input {
+  width: 100%;
+  padding: 9px 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule-strong);
+  border-radius: 0;
+  background: transparent;
+  outline: none;
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search input:focus,
+.field input:focus {
+  border-color: var(--volt);
+  box-shadow: 0 1px 0 var(--volt);
+}
+
+.search input::placeholder,
+.field input::placeholder {
+  color: var(--fg-faint);
+}
+
+.session-list {
+  list-style: none;
+}
+
+.session-list .empty {
+  padding: 18px 28px;
+}
+
+.session-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 16px 28px;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.session-row:hover {
+  background: rgba(233, 237, 242, 0.03);
+}
+
+.row-index,
+.row-len {
+  font-family: var(--f-readout);
+  font-size: 12px;
+  color: var(--fg-faint);
+  padding-top: 3px;
+}
+
+.row-body strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-body span {
+  display: block;
+  margin-top: 3px;
+  font-size: 13.5px;
+  color: var(--fg-dim);
+}
+
+.session-row.is-active {
+  background: linear-gradient(90deg, rgba(239, 255, 0, 0.07), transparent 80%);
+  box-shadow: inset 2px 0 0 var(--volt);
+}
+
+.session-row.is-active strong,
+.session-row.is-active .row-index {
+  color: var(--volt);
+}
+
+.transcript {
+  padding: 44px var(--gutter) 72px clamp(28px, 4vw, 64px);
+  max-width: 980px;
+}
+
+.transcript.is-rolling {
+  animation: roll-in 0.55s var(--ease-out) both;
+}
+
+.transcript-head h2 {
+  margin: 12px 0 26px;
+  font-family: var(--f-display);
+  font-size: clamp(30px, 3.4vw, 46px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+
+.specs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-block: 1px solid var(--rule);
+}
+
+.specs > div {
+  padding: 14px 0;
+}
+
+.specs dt {
+  font-family: var(--f-readout);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.specs dd {
+  margin-top: 5px;
+  font-family: var(--f-readout);
+  font-size: 14px;
+}
+
+.turns {
+  list-style: none;
+  display: grid;
+  gap: 30px;
+  margin-top: 36px;
+}
+
+.turn {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  column-gap: 24px;
+  animation: turn-in 0.6s var(--ease-out) both;
+  animation-delay: calc(var(--i) * 80ms + 160ms);
+}
+
+.turn-who {
+  grid-row: span 2;
+  padding-top: 6px;
+}
+
+.turn--user p {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.turn--model .turn-who {
+  color: var(--volt);
+}
+
+.turn--model p {
+  padding-left: 18px;
+  border-left: 1px solid var(--volt);
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--fg-dim);
+}
+
+.turn-tools {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  padding-left: 19px;
+}
+
+.turn-tools code {
+  padding: 3px 9px;
+  border: 1px solid var(--volt-dim);
+  border-radius: 999px;
+  font-family: var(--f-code);
+  font-size: 11px;
+  color: var(--volt);
+}
+
+.transcript-foot {
+  margin-top: 52px;
+}
+
+/* --------------------------------------------------------------------------
+   Skills
+   -------------------------------------------------------------------------- */
+
+.lede {
+  max-width: 820px;
+  padding: 64px var(--gutter) 28px;
+  font-size: 22px;
+  line-height: 1.5;
+  color: var(--fg-dim);
+}
+
+.lede-lead {
+  font-family: var(--f-display);
+  font-size: 1.3em;
+  color: var(--volt);
+}
+
+.skill-list {
+  list-style: none;
+  padding: 28px var(--gutter) 96px;
+}
+
+.skill {
+  border-top: 1px solid var(--rule);
+}
+
+.skill:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.skill-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 64px minmax(200px, 1fr) minmax(0, 1.3fr) 250px 24px;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.skill-index {
+  font-family: var(--f-readout);
+  font-size: 12px;
+  color: var(--volt);
+}
+
+.skill-name {
+  font-family: var(--f-display);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.1;
+  text-transform: uppercase;
+  transition: color 0.2s, text-shadow 0.2s;
+}
+
+.skill-desc {
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--fg-dim);
+}
+
+.skill-apps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 260px;
+}
+
+.skill-apps span {
+  padding: 3px 9px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  font-family: var(--f-readout);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+.skill-toggle {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.4s var(--ease-out);
+}
+
+.skill-toggle::before,
+.skill-toggle::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1.5px;
+  background: var(--volt);
+}
+
+.skill-toggle::after {
+  transform: rotate(90deg);
+}
+
+.skill-row:hover .skill-name,
+.skill.is-open .skill-name {
+  color: var(--volt);
+}
+
+.skill.is-open .skill-toggle {
+  transform: rotate(135deg);
+}
+
+.skill-detail {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.5s var(--ease-out);
+}
+
+.skill-detail > div {
+  overflow: hidden;
+}
+
+.skill.is-open .skill-detail {
+  grid-template-rows: 1fr;
+}
+
+.skill-detail pre {
+  margin: 0 0 32px 88px;
+  padding: 20px 24px;
+  border-left: 1px solid var(--volt);
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px), var(--ink-1);
+  font-family: var(--f-code);
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--fg-dim);
+  white-space: pre-wrap;
+}
+
+/* --------------------------------------------------------------------------
+   Settings
+   -------------------------------------------------------------------------- */
+
+.settings {
+  padding: 12px var(--gutter) 104px;
+}
+
+.setting-label {
+  position: relative;
+}
+
+/* section number in outline, sitting behind the heading */
+.setting-num {
+  position: absolute;
+  z-index: -1;
+  left: -0.08em;
+  top: -0.42em;
+  font-family: var(--f-display);
+  font-size: 96px;
+  font-weight: 400;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(239, 255, 0, 0.28);
+  pointer-events: none;
+}
+
+.setting {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(200px, 320px) minmax(0, 1fr);
+  gap: 48px;
+  padding: 40px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.setting-label h3 {
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--volt);
+}
+
+.setting-label p {
+  margin-top: 8px;
+  max-width: 280px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--fg-dim);
+}
+
+.setting-fields {
+  display: grid;
+  justify-items: start;
+  gap: 26px;
+  max-width: 540px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+
+.field input {
+  font-family: var(--f-code);
+  font-size: 14.5px;
+}
+
+.field-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.displays {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  align-items: center;
+}
+
+.displays li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.displays strong {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.display-shape {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  border: 1px solid var(--volt);
+  background: repeating-linear-gradient(to bottom, rgba(239, 255, 0, 0.07) 0 1px, transparent 1px 3px);
+  font-family: var(--f-readout);
+  font-size: 12px;
+  color: var(--volt);
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 14.5px;
+  cursor: pointer;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.switch-track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  transition: border-color 0.2s;
+}
+
+.switch-track span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--fg-dim);
+  transition: transform 0.3s var(--ease-out), background 0.2s;
+}
+
+.switch input:checked + .switch-track {
+  border-color: var(--volt);
+}
+
+.switch input:checked + .switch-track span {
+  transform: translateX(20px);
+  background: var(--volt);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 1px solid var(--volt);
+  outline-offset: 3px;
+}
+
+.controls > div {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 14px;
+}
+
+.controls > div:last-child {
+  border-bottom: 0;
+}
+
+.controls dd {
+  color: var(--fg-dim);
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  font-family: var(--f-readout);
+  font-size: 11px;
+}
+
+/* --------------------------------------------------------------------------
+   Toast + route transition
+   -------------------------------------------------------------------------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 50;
+  padding: 12px 18px;
+  border: 1px solid var(--volt);
+  background: var(--ink-0);
+  font-family: var(--f-readout);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--volt);
+  opacity: 0;
+  transform: translate(-50%, 16px);
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.4s var(--ease-out);
+}
+
+.toast.is-on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.tracking-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 3px),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 38%,
+      rgba(214, 31, 130, 0.35) 45%,
+      rgba(255, 255, 255, 0.5) 49%,
+      rgba(239, 255, 0, 0.35) 50%,
+      rgba(22, 54, 232, 0.4) 55%,
+      transparent 62%,
+      transparent 100%
+    );
+  background-size: 100% 100%, 100% 300%;
+  visibility: hidden;
+}
+
+.shell.is-tracking .tracking-wipe {
+  visibility: visible;
+}
+
+.shell.is-tracking .tracking-wipe {
+  animation: wipe 0.42s linear both;
+}
+
+.shell.is-tracking .view {
+  animation: view-tear 0.42s linear both;
+}
+
+/* --------------------------------------------------------------------------
+   Reveal
+   -------------------------------------------------------------------------- */
+
+/* Parallax layers get their own compositor layer: moving them is then a matrix change,
+   not a repaint (the hero lines carry a 40px blurred text-shadow). */
+[data-parallax] {
+  will-change: transform, translate;
+}
+
+/* Blocks play in as they enter the frame and back out as they leave it, travelling with
+   the scroll (motion.ts sets data-from / data-to). data-motion picks the axis: default
+   rises, "left"/"right" slide from that side, "wipe" tracks in like a tape head. */
+[data-reveal] {
+  --dx: 0px;
+  --dy: 24px;
+  opacity: 0;
+}
+
+[data-motion="left"] { --dx: -64px; --dy: 0px; }
+[data-motion="right"] { --dx: 64px; --dy: 0px; }
+[data-motion="wipe"] { --dx: -18px; --dy: 0px; }
+
+[data-reveal].is-shown {
+  opacity: 1;
+}
+
+[data-reveal].is-in {
+  --sx: var(--dx);
+  --sy: var(--dy);
+  animation: reveal 1s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 95ms + 60ms);
+}
+
+[data-reveal][data-from="above"].is-in {
+  --sy: calc(var(--dy) * -1);
+}
+
+[data-reveal].is-out {
+  --ex: var(--dx);
+  --ey: var(--dy);
+  animation: reveal-out 0.55s cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+[data-reveal][data-to="above"].is-out {
+  --ey: calc(var(--dy) * -1);
+}
+
+[data-motion="wipe"].is-in {
+  animation-name: reveal-wipe;
+}
+
+[data-motion="wipe"].is-out {
+  animation-name: reveal-wipe-out;
+}
+
+/* stickers: slapped on oversized and turned, overshoot, settle; peel off on the way out */
+[data-motion="slap"] { --dx: 0px; --dy: 0px; }
+
+[data-motion="slap"].is-in {
+  animation: reveal-slap 0.75s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+  animation-delay: calc(var(--i, 0) * 95ms + 120ms);
+}
+
+[data-motion="slap"].is-out {
+  animation: reveal-peel 0.5s cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+/* --------------------------------------------------------------------------
+   Keyframes
+   -------------------------------------------------------------------------- */
+
+@keyframes hum-bar {
+  from { transform: translateY(-120%); }
+  to { transform: translateY(560%); }
+}
+
+@keyframes osd-blink {
+  0%, 62% { opacity: 1; }
+  63%, 100% { opacity: 0.15; }
+}
+
+/* transform, not left: left re-lays-out the bar on every frame */
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(312.5%); } /* 100% of the track, in units of the 32% bar */
+}
+
+/* opacity + transform only: composited, no per-frame blur */
+@keyframes reveal {
+  0% { opacity: 0; transform: translate3d(var(--sx), var(--sy), 0); }
+  45% { opacity: 1; }
+  52% { opacity: 0.55; }
+  58% { opacity: 1; transform: none; }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes reveal-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translate3d(var(--ex), var(--ey), 0); }
+}
+
+/* the head tracks across: a hard clip edge with the tape's flicker behind it */
+/* insets are negative on the open sides so the clip never trims descenders, glows or
+   children drifting on their own parallax once the head has passed */
+@keyframes reveal-wipe {
+  0% { opacity: 0; clip-path: inset(-40% 100% -40% -40%); transform: translate3d(var(--sx), 0, 0); }
+  8% { opacity: 1; }
+  40% { opacity: 0.6; }
+  48% { opacity: 1; }
+  70% { clip-path: inset(-40% -40% -40% -40%); transform: none; }
+  100% { opacity: 1; clip-path: inset(-40% -40% -40% -40%); transform: none; }
+}
+
+/* names start "reveal" so motion.ts can tell an entrance from other animations */
+@keyframes reveal-slap {
+  0% { opacity: 0; transform: scale(1.45) rotate(10deg); }
+  45% { opacity: 1; }
+  60% { transform: scale(0.95) rotate(-1.5deg); }
+  80% { transform: scale(1.015) rotate(0.4deg); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes reveal-peel {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-14px) scale(1.06) rotate(7deg); }
+}
+
+@keyframes reveal-wipe-out {
+  from { opacity: 1; clip-path: inset(-40% -40% -40% -40%); }
+  to { opacity: 0; clip-path: inset(-40% -40% -40% 100%); }
+}
+
+@keyframes meter {
+  0% { transform: scaleY(0.25); }
+  100% { transform: scaleY(1); }
+}
+
+@keyframes turn-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes roll-in {
+  0% { opacity: 0; transform: translateY(-14px); }
+  30% { opacity: 1; transform: translate(-6px, 4px); }
+  45% { transform: translate(4px, 0); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes wipe {
+  0% { opacity: 0; background-position: 0 0, 0 100%; }
+  12% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; background-position: 0 0, 0 0%; }
+}
+
+/* transform + opacity only: composited, no full-page filters over the live canvas */
+@keyframes view-tear {
+  0% { transform: none; opacity: 1; }
+  12% { transform: translateX(-10px) skewX(-2deg); opacity: 0.75; }
+  24% { transform: translateX(14px); opacity: 0.35; }
+  36% { transform: translateX(-4px); opacity: 0.05; }
+  50% { transform: translateX(8px) skewX(1.5deg); opacity: 0.8; }
+  66% { transform: translateX(-2px); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* --------------------------------------------------------------------------
+   Reduced effects (setting) + reduced motion (OS)
+   -------------------------------------------------------------------------- */
+
+[data-fx="low"] .shell::after {
+  opacity: 0.02;
+}
+
+[data-fx="low"] .tape-fx > .fx-band {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .tape-fx > .fx-band {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 960px) {
+  .topbar {
+    grid-template-columns: auto 1fr;
+    padding-left: 20px;
+  }
+
+  .topbar-status,
+  .nav-num {
+    display: none;
+  }
+
+  .nav {
+    justify-content: flex-end;
+  }
+
+  .split,
+  .sessions,
+  .setting {
+    grid-template-columns: 1fr;
+  }
+
+  .split-media {
+    min-height: 360px;
+  }
+
+  .split--reverse .split-media {
+    order: -1;
+  }
+
+  .sticker--band {
+    right: 16px;
+  }
+
+  .sticker--seam {
+    left: auto;
+    right: 16px;
+    bottom: auto;
+    top: calc(360px - var(--h) * 0.5); /* the plate's bottom edge once stacked */
+  }
+
+  .session-index {
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .skill-row {
+    grid-template-columns: 40px minmax(0, 1fr) 24px;
+  }
+
+  .skill-desc,
+  .skill-apps {
+    grid-column: 2;
+  }
+
+  .skill-apps {
+    justify-content: flex-start;
+  }
+
+  .skill-toggle {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .skill-detail pre {
+    margin-left: 0;
+  }
+
+  .colophon {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-kicker {
+    margin-left: 0;
+  }
+
+  .hero-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .strip-latest {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav {
+    gap: 14px;
+  }
+
+  .nav a {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+
+  .wordmark span {
+    display: none;
+  }
+
+  .vf--hero {
+    --vf-side: 10px;
+    --vf-bottom: 210px; /* the chat strip stacks taller here */
+    --vf-arm: 40px;
+    --vf-pad-x: 16px;
+    --vf-pad-y: 12px;
+    --vf-size: 14px;
+  }
+
+  .hero-strip {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 18px 16px 22px;
+  }
+
+  .chatbar-tools [data-act="clear"],
+  .chatbar-tools [data-act="settings"] {
+    display: none;
+  }
+
+  .chat-turn {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .hero-copy {
+    left: 16px;
+    right: 16px;
+  }
+
+  .hero-line--offset {
+    margin-left: 0.9em;
+  }
+
+  /* no gap beside DIAL at this size: the accent drops under the title instead */
+  .hero-swash {
+    position: static;
+    margin-top: 0.3em;
+    font-size: 0.26em;
+  }
+
+  .specs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .turn {
+    grid-template-columns: 1fr;
+  }
+
+  .turn-who {
+    grid-row: auto;
+    margin-bottom: 8px;
+  }
+
+  .turn-tools {
+    grid-column: 1;
+  }
+
+  .kit > div {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .kit .arrow {
+    display: none;
+  }
+
+  .controls > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

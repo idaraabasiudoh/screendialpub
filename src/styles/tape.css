@@ -1,0 +1,76 @@
+/* ==========================================================================
+   Tape picture layers, shared by the dashboard (heroes, bands, plates, chat bar) and
+   the overlay's input bar: the WebGL tape (vhs.ts), the Vanta waves over it (waves.ts),
+   the no-WebGL fallbacks, and the readability scrim input bars put over both.
+   Every token has a fallback: the overlay doesn't load the dashboard's palette.
+   ========================================================================== */
+
+.tape-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block;
+}
+
+/* Vanta waves (waves.ts): a mesh tinted from the host's own tape look, screened over the
+   picture so lit crests glow and faces turned away drop out. Masked with the tape's 3px
+   scanline pitch so the facets sit inside the lines like the rest of the image; faded in
+   once the first frame lands. */
+.tape-waves {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  -webkit-mask-image: repeating-linear-gradient(to bottom, #000 0 2px, rgba(0, 0, 0, 0.35) 2px 3px);
+  mask-image: repeating-linear-gradient(to bottom, #000 0 2px, rgba(0, 0, 0, 0.35) 2px 3px);
+  transition: opacity 2.4s var(--ease-out, cubic-bezier(0.2, 0.7, 0.1, 1));
+}
+
+.tape-waves.is-on {
+  opacity: var(--waves-strength, 0.6);
+}
+
+/* fallbacks when WebGL is unavailable */
+.tape--fallback.tape--broadcast {
+  background:
+    radial-gradient(40% 55% at 62% 55%, rgba(255, 106, 26, 0.75), transparent 70%),
+    radial-gradient(60% 30% at 30% 18%, rgba(236, 42, 140, 0.7), transparent 70%),
+    radial-gradient(70% 50% at 20% 80%, rgba(22, 54, 232, 0.8), transparent 70%),
+    linear-gradient(var(--violet, #3d1a8a), var(--ink-0, #00111f));
+  filter: blur(0.5px);
+}
+.tape--fallback.tape--tide {
+  background:
+    radial-gradient(45% 40% at 60% 40%, rgba(228, 255, 122, 0.55), transparent 70%),
+    radial-gradient(60% 60% at 40% 60%, rgba(14, 111, 134, 0.9), transparent 70%),
+    var(--ink-1, #001a2b);
+}
+.tape--fallback.tape--sodium {
+  background:
+    radial-gradient(45% 50% at 45% 45%, rgba(241, 255, 0, 0.65), transparent 70%),
+    radial-gradient(70% 70% at 60% 70%, rgba(94, 62, 158, 0.9), transparent 70%),
+    #070a26;
+}
+
+/* --------------------------------------------------------------------------
+   Input bars (bar-picture.ts): the landing page's picture behind the text.
+   Stack: tape canvas + waves (z 0) < scrim (z 1) < the bar's own contents (z 2).
+   -------------------------------------------------------------------------- */
+
+/* Dark where the text starts, open where it isn't: 0.66 at the text's head eases to
+   0.5 mid-bar and 0.3 over the toolbar, whose icons carry their own dark discs (and the
+   Send button is solid volt). The tape's white-hot core sits right of centre, away from
+   the text column; the input's dark text-shadow covers the moments it drifts behind. */
+.bar-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px),
+    linear-gradient(90deg, rgba(0, 10, 22, 0.66) 0%, rgba(0, 10, 22, 0.5) 45%, rgba(0, 10, 22, 0.3) 72%, rgba(0, 10, 22, 0.3) 100%);
+}
