@@ -212,12 +212,10 @@ export function homePage(ctx: PageContext): Page {
           </ul>
         </div>
       </div>
-      <figure class="split-media" data-tape="sodium">
+      <figure class="split-media split-media--video">
+        <video class="split-video" src="/videos/dav.mp4" autoplay muted playsinline controls></video>
         ${fxLayers("soft")}
-        <span class="vf-frame vf-frame--fig" aria-hidden="true"></span>
-        <span class="fig-num" aria-hidden="true" data-parallax="0,-160">03</span>
-        <div class="osd osd--meter" aria-hidden="true"><span>Tracking</span><span class="meter">${"<i></i>".repeat(8)}</span></div>
-        <figcaption class="meta" data-reveal="2" data-motion="wipe">Fig. 03 &mdash; Face, overexposed</figcaption>
+        <figcaption class="meta" data-reveal="2" data-motion="wipe">Fig. 03 &mdash; DaVinci Resolve, live</figcaption>
       </figure>
     </section>
 
@@ -249,7 +247,6 @@ export function homePage(ctx: PageContext): Page {
     scope.tape(el.querySelector(".hero")!, "broadcast", 1, ctx);
     scope.waves(el.querySelector(".hero")!, "broadcast", 0.6, ctx);
     scope.tape(el.querySelector('[data-tape="tide"]')!, "tide", 0.6, ctx);
-    scope.tape(el.querySelector('[data-tape="sodium"]')!, "sodium", 0.55, ctx);
     el.querySelectorAll<HTMLElement>("[data-timecode]").forEach((t) =>
       scope.add(startTimecode(t, 14 * 60 + 32))
     );

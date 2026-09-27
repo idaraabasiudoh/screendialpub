@@ -1094,6 +1094,21 @@ input {
   color: rgba(255, 255, 255, 0.78);
 }
 
+.split-video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Clears the native control bar sitting at the bottom of the video. */
+.split-media--video figcaption {
+  bottom: 66px;
+}
+
 /* Plate furniture (brackets are .vf-frame--fig): the plate number in outline, a tracking meter. */
 .fig-num {
   position: absolute;
