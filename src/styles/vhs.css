@@ -806,6 +806,73 @@ input {
   opacity: 0.8;
 }
 
+.install-cmd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 42px;
+  padding: 0 8px 0 18px;
+  border: 1.2px solid var(--rule-strong);
+  border-radius: 10px;
+  background: var(--ink-1);
+}
+
+.install-cmd-label {
+  font-family: var(--f-readout);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--volt);
+}
+
+.install-cmd-text {
+  font-family: var(--f-code);
+  font-size: 12.5px;
+  color: var(--fg-dim);
+  white-space: nowrap;
+  overflow-x: auto;
+  max-width: min(52vw, 480px);
+}
+
+.install-cmd-text::before {
+  content: "$ ";
+  color: var(--fg-faint);
+}
+
+.install-cmd-copy {
+  flex: none;
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 7px;
+  background: none;
+  color: var(--fg);
+  font-family: var(--f-readout);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.install-cmd-copy:hover {
+  background: var(--volt);
+  color: var(--ink-0);
+  border-color: var(--volt);
+}
+
+.install-cmd-note {
+  margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .install-cmd-text {
+    max-width: 46vw;
+  }
+}
+
 .text-btn {
   border: 0;
   background: none;

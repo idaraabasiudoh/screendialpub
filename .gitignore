@@ -6,3 +6,6 @@ dist-ssr
 .env.*
 .DS_Store
 *.log
+
+# Build bundles it into the app; never commit one (ships as a GitHub Release asset instead)
+*.dmg
